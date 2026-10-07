@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Student Details</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--text:#1d2433;--muted:#6b7385;--accent:#4f46e5;--border:#e0e4ee;--err:#d92d20;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12141c;--card:#1c2030;--text:#eceff7;--muted:#9aa2b8;--accent:#818cf8;--border:#2c3248;--err:#f97066}}
+:root[data-theme="dark"]{--bg:#12141c;--card:#1c2030;--text:#eceff7;--muted:#9aa2b8;--accent:#818cf8;--border:#2c3248;--err:#f97066}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+main{max-width:900px;margin:0 auto;padding:24px 16px}
+h1{margin:0 0 4px;font-size:1.6rem}
+.sub{color:var(--muted);margin:0 0 20px}
+form{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+label{display:flex;flex-direction:column;font-size:.85rem;color:var(--muted);gap:4px}
+input,select{padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:1rem}
+input:focus,select:focus{outline:2px solid var(--accent);border-color:transparent}
+.actions{grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+button{padding:10px 18px;border:0;border-radius:8px;background:var(--accent);color:#fff;font-size:1rem;cursor:pointer}
+button.ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+button:disabled{opacity:.5;cursor:not-allowed}
+#count{color:var(--muted);font-size:.9rem}
+#msg{color:var(--err);font-size:.9rem;min-height:1.3em;grid-column:1/-1;margin:0}
+#blocks{margin-top:24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.block{background:var(--card);border:1px solid var(--border);border-top:5px solid var(--accent);border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.block h3{margin:0 0 8px;font-size:1.1rem}
+.block p{margin:2px 0;font-size:.92rem;overflow-wrap:anywhere}
+.block span{color:var(--muted)}
+.empty{color:var(--muted);grid-column:1/-1;text-align:center;padding:24px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Student Details</h1>
+  <p class="sub">Add up to 5 students. Each one is saved in a JavaScript array and shown as a block below.</p>
+
+  <form id="form" autocomplete="off">
+    <label>Name<input id="name" required maxlength="40"></label>
+    <label>Roll No.<input id="roll" required maxlength="15"></label>
+    <label>Class / Course<input id="course" required maxlength="30"></label>
+    <label>Email<input id="email" type="email" required></label>
+    <label>Age<input id="age" type="number" min="3" max="99" required></label>
+    <p id="msg"></p>
+    <div class="actions">
+      <button type="submit" id="add">Add Student</button>
+      <button type="button" class="ghost" id="clear">Clear All</button>
+      <span id="count"></span>
+    </div>
+  </form>
+
+  <section id="blocks" aria-live="polite"></section>
+</main>
+
+<script>
+const MAX = 5;
+const students = [];            // array that stores every student's details
+
+const form = document.getElementById('form');
+const blocks = document.getElementById('blocks');
+const msg = document.getElementById('msg');
+const count = document.getElementById('count');
+const addBtn = document.getElementById('add');
+
+function render() {
+  blocks.innerHTML = '';
+  if (students.length === 0) {
+    blocks.innerHTML = '<div class="empty">No students added yet.</div>';
+  }
+  students.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'block';
+    div.innerHTML = '<h3></h3><p><span>Roll No: </span><b class="r"></b></p>' +
+      '<p><span>Class: </span><b class="c"></b></p><p><span>Email: </span><b class="e"></b></p>' +
+      '<p><span>Age: </span><b class="a"></b></p>';
+    div.querySelector('h3').textContent = (i + 1) + '. ' + s.name;
+    div.querySelector('.r').textContent = s.roll;
+    div.querySelector('.c').textContent = s.course;
+    div.querySelector('.e').textContent = s.email;
+    div.querySelector('.a').textContent = s.age;
+    blocks.appendChild(div);
+  });
+  count.textContent = students.length + ' / ' + MAX + ' students';
+  addBtn.disabled = students.length >= MAX;
+}
+
+form.addEventListener('submit', function (e) {
+  e.preventDefault();
+  if (students.length >= MAX) { msg.textContent = 'Maximum of ' + MAX + ' students reached.'; return; }
+  const roll = document.getElementById('roll').value.trim();
+  if (students.some(s => s.roll.toLowerCase() === roll.toLowerCase())) {
+    msg.textContent = 'That roll number is already added.'; return;
+  }
+  students.push({
+    name: document.getElementById('name').value.trim(),
+    roll: roll,
+    course: document.getElementById('course').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    age: document.getElementById('age').value
+  });
+  msg.textContent = '';
+  form.reset();
+  document.getElementById('name').focus();
+  render();
+});
+
+document.getElementById('clear').addEventListener('click', function () {
+  students.length = 0;
+  msg.textContent = '';
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
